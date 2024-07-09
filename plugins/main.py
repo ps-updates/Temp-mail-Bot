@@ -4,7 +4,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from pyrogram.errors import FloodWait, InputUserDeactivated, UserIsBlocked, PeerIdInvalid
 import os, sys, time, asyncio, logging, datetime
 from config import Config , Txt
-from database import db
+from helper.database import db
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
