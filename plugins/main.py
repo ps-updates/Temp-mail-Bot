@@ -81,7 +81,7 @@ async def generate_email(client, query):
     
     for text in texts:
         await processing_message.edit(text=text)
-        await asyncio.sleep(0.5)  # Adjust the delay as necessary
+        await asyncio.sleep(0.1)  # Adjust the delay as necessary
 
     cur_time = int(time.time())
     user_data = await db.get_data(user_id, ["limit", "used"])
@@ -182,18 +182,18 @@ async def show_statistics(client, query):
 @Client.on_callback_query(filters.regex('support'))
 async def support(client, callback_query):
     user_id = callback_query.from_user.id
-    await client.delete_messages(chat_id=callback_query.message.chat.id, message_ids=callback_query.message.message_id)
+    await query.answer("coming soon...")
 
-    keyboard = InlineKeyboardMarkup([
+    """keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text='❌ᴄᴀɴᴄᴇʟ', callback_data='cancel_support')]
     ])
     await callback_query.message.reply_text(
         "<b>📞 ʏᴏᴜ ᴀʀᴇ ɴᴏᴡ ɪɴ ᴅɪʀᴇᴄᴛ ᴄᴏɴᴛᴀᴄᴛ ᴡɪᴛʜ ᴏᴜʀ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ</b>\n\n<i>ʏᴏᴜ ᴄᴀɴ sᴇɴᴅ ʜᴇʀᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴜʙᴍɪᴛ, ᴛʜᴇ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ ᴡɪʟʟ ʀᴇᴄᴇɪᴠᴇ ɪᴛ ᴀɴᴅ sᴇɴᴅ ᴀɴ ᴀɴsᴡᴇʀ ᴅɪʀᴇᴄᴛʟʏ ʜᴇʀᴇ ɪɴ ᴄʜᴀᴛ!</i>",
         reply_markup=keyboard, parse_mode=ParseMode.HTML
     )
-    user_states[user_id] = "support_chat"
+    user_states[user_id] = "support_chat"""
     
-@Client.on_callback_query(filters.regex('cancel_support'))
+"""@Client.on_callback_query(filters.regex('cancel_support'))
 async def cancel_support(client, query):
     await client.delete_messages(chat_id=query.message.chat.id, message_ids=query.message.message_id)
 
@@ -247,7 +247,7 @@ async def handle_admin_reply(client, message):
         await message.reply_text(
             f"*↩️ ʀᴇᴘʟʏ sᴇɴᴛ ᴛᴏ ᴜsᴇʀ:* _{message.text}_", parse_mode="MARKDOWN")
         # Reset the admin state
-        user_states[admin_id] = None
+        user_states[admin_id] = None"""
 
 @Client.on_message(filters.command("broadcast") & filters.user(Config.ADMIN) & filters.reply)
 async def broadcast_handler(client: Client, message: Message):
