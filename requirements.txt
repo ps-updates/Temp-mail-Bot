@@ -6,4 +6,5 @@ Pillow
 aiohttp
 pytz
 requests
-python-dotenv==1.0.0
+psutil
+python-dotenv
