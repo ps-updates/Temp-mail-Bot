@@ -4,10 +4,12 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from pyrogram.errors import FloodWait, InputUserDeactivated, UserIsBlocked, PeerIdInvalid
 import os, sys, time, asyncio, logging, datetime
 from config import Config , Txt
-from helper.database import db
+from database import db
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+user_states = {}
 
 async def is_subscribed(bot, query, channel):
     btn = []
@@ -178,19 +180,19 @@ async def show_statistics(client, query):
     await query.reply_text(botstats, parse_mode=ParseMode.HTML)
 
 @Client.on_callback_query(filters.regex('support'))
-async def support(client, query):
-    user_id = query.from_user.id
-    await client.delete_messages(chat_id=query.message.chat.id, message_ids=query.message.message_id)
+async def support(client, callback_query):
+    user_id = callback_query.from_user.id
+    await client.delete_messages(chat_id=callback_query.message.chat.id, message_ids=callback_query.message.message_id)
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text='❌ᴄᴀɴᴄᴇʟ', callback_data='cancel_support')]
     ])
-    await query.message.reply_text(
+    await callback_query.message.reply_text(
         "<b>📞 ʏᴏᴜ ᴀʀᴇ ɴᴏᴡ ɪɴ ᴅɪʀᴇᴄᴛ ᴄᴏɴᴛᴀᴄᴛ ᴡɪᴛʜ ᴏᴜʀ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ</b>\n\n<i>ʏᴏᴜ ᴄᴀɴ sᴇɴᴅ ʜᴇʀᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴜʙᴍɪᴛ, ᴛʜᴇ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ ᴡɪʟʟ ʀᴇᴄᴇɪᴠᴇ ɪᴛ ᴀɴᴅ sᴇɴᴅ ᴀɴ ᴀɴsᴡᴇʀ ᴅɪʀᴇᴄᴛʟʏ ʜᴇʀᴇ ɪɴ ᴄʜᴀᴛ!</i>",
         reply_markup=keyboard, parse_mode=ParseMode.HTML
     )
-    await Client.set_user_state(user_id, "support_chat")
-
+    user_states[user_id] = "support_chat"
+    
 @Client.on_callback_query(filters.regex('cancel_support'))
 async def cancel_support(client, query):
     await client.delete_messages(chat_id=query.message.chat.id, message_ids=query.message.message_id)
@@ -203,39 +205,49 @@ async def cancel_support(client, query):
     ])
     await query.message.reply_photo(photo="https://graph.org/file/557d82c251df20c24495a.jpg", caption=Txt.START_TXT,
               parse_mode=ParseMode.HTML, reply_markup=keyboard)
-    await Client.set_user_state(query.from_user.id, None)
+    user_states[user_id] = None
 
-@Client.on_message(filters.user_state("support_chat"))
-async def handle_support_message(client, message):
-    markup = InlineKeyboardMarkup([
-        [InlineKeyboardButton('↩️ ʀᴇᴘʟʏ ᴜsᴇʀ', callback_data=f'/replyUser {message.chat.id}')]
-    ])
-    await client.send_message(
-        chat_id=Config.ADMIN, 
-        text=f"*📩 ɴᴇᴡ sᴜᴘᴘᴏʀᴛ ᴍᴇssᴀɢᴇ ꜰʀᴏᴍ:\n\n➡️ ɴᴀᴍᴇ: {message.from_user.first_name}\n➡️ ᴜsᴇʀɴᴀᴍᴇ: @{message.from_user.username}\n➡️ ɪᴅ:* `{message.chat.id}`\n\n📝 *ᴍᴇssᴀɢᴇ: {message.text}*",
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=markup
-    )
-    await message.reply_text(f"*✅ ᴍᴇssᴀɢᴇ sᴇɴᴛ ᴛᴏ ᴛʜᴇ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ:* _{message.text}_", parse_mode=ParseMode.MARKDOWN)
-    await Client.set_user_state(message.from_user.id, None)
+@Client.on_message(filters.private)
+async def handle_private_messages(client, message):
+    user_id = message.from_user.id
+    state = user_states.get(user_id)
+
+    if state == "support_chat":
+        admin = 853554999
+        markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton('↩️ ʀᴇᴘʟʏ ᴜsᴇʀ', callback_data=f'/replyUser {message.chat.id}')]
+        ])
+        await client.send_message(
+            chat_id=admin, 
+            text=f"*📩 ɴᴇᴡ sᴜᴘᴘᴏʀᴛ ᴍᴇssᴀɢᴇ ꜰʀᴏᴍ:\n\n➡️ ɴᴀᴍᴇ: {message.from_user.first_name}\n➡️ ᴜsᴇʀɴᴀᴍᴇ: @{message.from_user.username}\n➡️ ɪᴅ:* `{message.chat.id}`\n\n📝 *ᴍᴇssᴀɢᴇ: {message.text}*",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=markup
+        )
+        await message.reply_text(f"*✅ ᴍᴇssᴀɢᴇ sᴇɴᴛ ᴛᴏ ᴛʜᴇ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ:* _{message.text}_", parse_mode=ParseMode.MARKDOWN)
 
 @Client.on_callback_query(filters.regex('/replyUser'))
-async def reply_user(client, query):
-    admin = query.from_user.id
-    if admin in Config.ADMIN:
-        await query.message.reply_text("*➡️ ᴇɴᴛᴇʀ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ꜰᴏʀ ᴜsᴇʀ*", parse_mode=ParseMode.MARKDOWN)
-        await Client.set_user_state(admin, "reply_user", query.data.split()[1])
+async def reply_user(client, callback_query):
+    admin_id = callback_query.from_user.id
+    if admin_id in user_is_admin:
+        user_id = int(callback_query.data.split()[1])
+        user_states[admin_id] = {"state": "reply_user", "reply_to": user_id}
+        await callback_query.message.reply_text("*➡️ ᴇɴᴛᴇʀ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ꜰᴏʀ ᴜsᴇʀ*", parse_mode=ParseMode.MARKDOWN)
     else:
-        await query.message.reply_text("<b>Sorry, this command is only available to administrators.</b>", parse_mode=ParseMode.HTML)
+        await callback_query.message.reply_text("<b>Sorry, this command is only available to administrators.</b>", parse_mode=ParseMode.HTML)
 
-@Client.on_message(filters.user_state("reply_user"))
-async def handle_reply_user(client, message):
-    options = message.chat.state_params
-    await client.send_message(chat_id=options,
-                text=f"*📩 ɴᴇᴡ sᴜᴘᴘᴏʀᴛ ᴍᴇssᴀɢᴇ ꜰʀᴏᴍ ᴀᴅᴍɪɴ:\n\n📝 ᴍᴇssᴀɢᴇ:* _{message.text}_", parse_mode="MARKDOWN")
-    await message.reply_text(
-        f"*↩️ ʀᴇᴘʟʏ sᴇɴᴛ ᴛᴏ ᴜsᴇʀ:* _{message.text}_", parse_mode="MARKDOWN")
-    await Client.set_user_state(message.chat.id, None)
+@Client.on_message(filters.private)
+async def handle_admin_reply(client, message):
+    admin_id = message.from_user.id
+    state_data = user_states.get(admin_id)
+
+    if state_data and state_data.get("state") == "reply_user":
+        user_id = state_data.get("reply_to")
+        await client.send_message(chat_id=user_id,
+                                  text=f"*📩 ɴᴇᴡ sᴜᴘᴘᴏʀᴛ ᴍᴇssᴀɢᴇ ꜰʀᴏᴍ ᴀᴅᴍɪɴ:\n\n📝 ᴍᴇssᴀɢᴇ:* _{message.text}_", parse_mode="MARKDOWN")
+        await message.reply_text(
+            f"*↩️ ʀᴇᴘʟʏ sᴇɴᴛ ᴛᴏ ᴜsᴇʀ:* _{message.text}_", parse_mode="MARKDOWN")
+        # Reset the admin state
+        user_states[admin_id] = None
 
 @Client.on_message(filters.command("broadcast") & filters.user(Config.ADMIN) & filters.reply)
 async def broadcast_handler(client: Client, message: Message):
