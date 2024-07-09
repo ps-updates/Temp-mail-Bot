@@ -1,0 +1,9 @@
+pyrofork
+TgCrypto 
+motor
+dnspython
+Pillow
+aiohttp
+pytz
+requests
+python-dotenv==1.0.0
